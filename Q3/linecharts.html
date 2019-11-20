@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title> Q3</title>
+    <script type="application/javascript" src="../lib/d3.v5.min.js"></script>
+    <script type="application/javascript" src="../lib/d3-dsv.min.js"></script>
+    <script type="application/javascript" src="../lib/d3-fetch.min.js"></script>
+    <script type="application/javascript" src="../lib/d3-scale-chromatic.v1.min.js"></script>
+    <script type="application/javascript" src="../lib/topojson.v2.min.js"></script>
+    
+    <div class="section1">
+    	
+    	<svg id="graph1" height=700 width=800></svg>
+
+
+    </div>
+
+    <div class="section2">
+    	
+    	<svg id="graph2" height=700 width=800></svg>
+
+
+    </div>
+    <div class="section2">
+    	
+    	<svg id="graph3" height=700 width=800></svg>
+
+
+    </div>
+    <div class="section">
+    	
+    	<svg id="graph4" height=700 width=800></svg>
+
+
+    </div>
+    
+    <style type="text/css">
+    	.line5{
+    		fill:none;
+    		stroke:#FFC300;
+    		stroke-width: 3;
+    	}
+    	.line6{
+    		fill:none;
+    		stroke:#FF5733;
+    		stroke-width: 3;
+    	}
+    	.line7{
+    		fill:none;
+    		stroke:#C70039;
+    		stroke-width: 3;
+    	}
+    	.line8{
+    		fill:none;
+    		stroke:#900C3F;
+    		stroke-width: 3;
+    	}
+    	.legend rect {
+            fill:white;
+            stroke:black;
+            opacity:0.8;
+        }
+        div.section1 {
+            display: inline-block;
+            width: 770px;
+            height: 450px;   /* We'll override height later */
+            background-color: none;
+        }
+        div.section2 {
+            display: inline-block;
+            width: 770px;
+            height: 450px;   /* We'll override height later */
+            background-color: none;
+        }
+
+
+    </style>
+</head>
+<body>
+    <center>Lego Sets by Year from Rebrickable</center>
+
+    <script type="text/javascript">
+    	var formatTime = d3.timeParse("%Y");
+        
+    d3.dsv("," , "earthquakes.csv", function(data){
+        return{
+
+            year: formatTime(data.year),
+            ["8.0+"]:parseInt(data["8.0+"]),
+            ["7_7.9"]:parseInt(data["7_7.9"]),
+            ["6_6.9"]:parseInt(data["6_6.9"]),
+            ["5_5.9"]:parseInt(data["5_5.9"]),
+            ["Estimated Deaths"]:parseInt(data["Estimated Deaths"])
+
+        }
+
+    }).then(function(data){
+        console.log(data);
+        let y8max = d3.max(data,d=>d["8.0+"])
+        let y7max = d3.max(data,d=>d["7_7.9"])
+        let y6max = d3.max(data,d=>d["6_6.9"])
+        let y5max = d3.max(data,d=>d["5_5.9"])
+        let y8min = d3.min(data,d=>d["8.0+"])
+        let y7min = d3.min(data,d=>d["7_7.9"])
+        let y6min = d3.min(data,d=>d["6_6.9"])
+        let y5min = d3.min(data,d=>d["5_5.9"])
+        
+        xScale = d3.scaleTime()
+        .domain(d3.extent(data,d=>d.year))
+        .range([0,600])
+        
+        y5Scale =d3.scaleLinear()
+        .domain([0,y5max]).range([300,0])
+
+        svg = d3.select("#graph1").append("svg")
+        .attr("width",700).attr("height",800)
+        
+        svg.append("g").attr("transform","translate(50,50)")
+        .call(d3.axisLeft(y5Scale))
+
+        svg.append("g").attr("transform","translate(50,350)")
+        .call(d3.axisBottom(xScale))
+
+
+        line5 = d3.line()
+        .x(d=>xScale(d.year))
+        .y(d=>y5Scale(d["5_5.9"]))
+        .curve(d3.curveMonotoneX)
+
+        line6 = d3.line()
+        .x(d=>xScale(d.year))
+        .y(d=>y5Scale(d["6_6.9"]))
+        .curve(d3.curveMonotoneX)
+
+        line7 = d3.line()
+        .x(d=>xScale(d.year))
+        .y(d=>y5Scale(d["7_7.9"]))
+        .curve(d3.curveMonotoneX)
+
+        line8 = d3.line()
+        .x(d=>xScale(d.year))
+        .y(d=>y5Scale(d["8.0+"]))
+        .curve(d3.curveMonotoneX)        
+
+
+        svg.append("path").attr("transform","translate(50,50)").datum(data).attr("d",line5).attr("class","line5")
+
+        svg.append("path").attr("transform","translate(50,50)").datum(data).attr("d",line6).attr("class","line6")
+
+        svg.append("path").attr("transform","translate(50,50)").datum(data).attr("d",line7).attr("class","line7")
+
+        svg.append("path").attr("transform","translate(50,50)").datum(data).attr("d",line8).attr("class","line8")
+
+        svg.append("g").attr("class", "legendQuant").attr("transform", "translate(20,20)");
+
+        svg.append("text").attr("transform", "rotate(-90)")
+           .attr("y",0)
+           .attr("x",-190)
+           .attr("dy", "1em")
+           .style("text-anchor", "middle")
+           .text("Num of Earthquakes"); 
+
+        svg.append("text").attr("transform",
+            "translate(" + 330 + " ," + 400+ ")")
+            .style("text-anchor", "middle")
+            .text("Year");  
+
+        svg.append("text").attr("transform",
+            "translate(" + 340 + " ," + 20+ ")")
+            .style("text-anchor", "middle")
+            .text("Worldwide Earthquake stats 2000-2015");  
+
+        legend_svg = d3.select("#graph1")
+        legend_svg.attr("transform", "translate(0,20)");
+
+
+// {'5_5.9': '#FFC300', '6_6.9': '#FF5733', '7_7.9': '#C70039', '8.0+': '#900C3F'}
+        legend_svg.append("rect").attr("x",700).attr("y",6).attr("width", 18).attr("height", 10)
+        .style("fill", "#FFC300")
+        legend_svg.append("rect").attr("x",700).attr("y",18).attr("width", 18).attr("height", 10)
+        .style("fill", "#FF5733")
+        legend_svg.append("rect").attr("x",700).attr("y",30).attr("width", 18).attr("height", 10)
+        .style("fill", "#C70039")
+        legend_svg.append("rect").attr("x",700).attr("y",42).attr("width", 18).attr("height", 10)
+        .style("fill", "#900C3F")
+        
+        legend_svg.append("text").attr("x", 720).attr("y", 16).text("5_5.9").style("font-size", "15px").attr("alignment-baseline","middle")
+        legend_svg.append("text").attr("x", 720).attr("y", 28).text("6_6.9").style("font-size", "15px").attr("alignment-baseline","middle")
+        legend_svg.append("text").attr("x", 720).attr("y", 40).text("7_7.9").style("font-size", "15px").attr("alignment-baseline","middle")
+        legend_svg.append("text").attr("x", 720).attr("y", 52).text("8.0+").style("font-size", "15px").attr("alignment-baseline","middle")
+   })
+    //------------------------------------------------------//
+    d3.dsv("," , "earthquakes.csv", function(data){
+        return{
+
+            year: formatTime(data.year),
+            ["8.0+"]:parseInt(data["8.0+"]),
+            ["7_7.9"]:parseInt(data["7_7.9"]),
+            ["6_6.9"]:parseInt(data["6_6.9"]),
+            ["5_5.9"]:parseInt(data["5_5.9"]),
+            ["Estimated Deaths"]:parseInt(data["Estimated Deaths"])
+
+        }
+
+    }).then(function(data){
+        console.log(data);
+        let y8max = d3.max(data,d=>d["8.0+"])
+        let y7max = d3.max(data,d=>d["7_7.9"])
+        let y6max = d3.max(data,d=>d["6_6.9"])
+        let y5max = d3.max(data,d=>d["5_5.9"])
+        let y8min = d3.min(data,d=>d["8.0+"])
+        let y7min = d3.min(data,d=>d["7_7.9"])
+        let y6min = d3.min(data,d=>d["6_6.9"])
+        let y5min = d3.min(data,d=>d["5_5.9"])
+        
+        xScale = d3.scaleTime()
+        .domain(d3.extent(data,d=>d.year))
+        .range([0,600])
+        
+        y5Scale =d3.scaleLinear()
+        .domain([0,y5max]).range([300,0])
+
+        svg = d3.select("#graph2").append("svg")
+        .attr("width",700).attr("height",800)
+        
+        svg.append("g").attr("transform","translate(50,50)")
+        .call(d3.axisLeft(y5Scale))
+
+        svg.append("g").attr("transform","translate(50,350)")
+        .call(d3.axisBottom(xScale))
+
+
+        line5 = d3.line()
+        .x(d=>xScale(d.year))
+        .y(d=>y5Scale(d["5_5.9"]))
+        .curve(d3.curveMonotoneX)
+
+        line6 = d3.line()
+        .x(d=>xScale(d.year))
+        .y(d=>y5Scale(d["6_6.9"]))
+        .curve(d3.curveMonotoneX)
+
+        line7 = d3.line()
+        .x(d=>xScale(d.year))
+        .y(d=>y5Scale(d["7_7.9"]))
+        .curve(d3.curveMonotoneX)
+
+        line8 = d3.line()
+        .x(d=>xScale(d.year))
+        .y(d=>y5Scale(d["8.0+"]))
+        .curve(d3.curveMonotoneX)        
+
+
+        svg.append("path").attr("transform","translate(50,50)").datum(data).attr("d",line5).attr("class","line5")
+
+        svg.append("path").attr("transform","translate(50,50)").datum(data).attr("d",line6).attr("class","line6")
+
+        svg.append("path").attr("transform","translate(50,50)").datum(data).attr("d",line7).attr("class","line7")
+
+        svg.append("path").attr("transform","translate(50,50)").datum(data).attr("d",line8).attr("class","line8")
+
+        circles=svg.selectAll("circle").data(data).enter()
+            circles.append("circle")
+            .attr("transform","translate(50,50)")
+            .attr("cx", function(d) {return xScale(d.year);})
+            .attr("cy", function(d) {return y5Scale(d["5_5.9"]);})
+            .attr("r", function(d) {
+             return Math.sqrt(Math.sqrt(d["Estimated Deaths"]))/2;
+            })
+            .style("fill", "#FFC300")
+
+        
+            circles.append("circle")
+            .attr("transform","translate(50,50)")
+            .attr("cx", function(d) {return xScale(d.year);})
+            .attr("cy", function(d) {return y5Scale(d["6_6.9"]);})
+            .attr("r", function(d) {
+             return Math.sqrt(Math.sqrt(d["Estimated Deaths"]))/2;
+            })
+            .style("fill", "#FF5733")
+
+            circles.append("circle")
+            .attr("transform","translate(50,50)")
+            .attr("cx", function(d) {return xScale(d.year);})
+            .attr("cy", function(d) {return y5Scale(d["7_7.9"]);})
+            .attr("r", function(d) {
+             return Math.sqrt(Math.sqrt(d["Estimated Deaths"]))/2;
+            })
+            .style("fill", "#C70039")  
+
+            circles.append("circle")
+            .attr("transform","translate(50,50)")
+            .attr("cx", function(d) {return xScale(d.year);})
+            .attr("cy", function(d) {return y5Scale(d["8.0+"]);})
+            .attr("r", function(d) {
+             return Math.sqrt(Math.sqrt(d["Estimated Deaths"]))/2;
+            })
+            .style("fill", "#900C3F")    
+
+        svg.append("g").attr("class", "legendQuant").attr("transform", "translate(20,20)");
+
+        svg.append("text").attr("transform", "rotate(-90)")
+           .attr("y",0)
+           .attr("x",-190)
+           .attr("dy", "1em")
+           .style("text-anchor", "middle")
+           .text("Num of Earthquakes"); 
+
+        svg.append("text").attr("transform",
+            "translate(" + 330 + " ," + 400+ ")")
+            .style("text-anchor", "middle")
+            .text("Year");  
+
+        svg.append("text").attr("transform",
+            "translate(" + 340 + " ," + 20+ ")")
+            .style("text-anchor", "middle")
+            .text("Worldwide Earthquake stats 2000-2015 with symbols");  
+
+        legend_svg = d3.select("#graph2")
+        legend_svg.attr("transform", "translate(0,20)");
+
+
+// {'5_5.9': '#FFC300', '6_6.9': '#FF5733', '7_7.9': '#C70039', '8.0+': '#900C3F'}
+        legend_svg.append("rect").attr("x",700).attr("y",6).attr("width", 18).attr("height", 10)
+        .style("fill", "#FFC300")
+        legend_svg.append("rect").attr("x",700).attr("y",18).attr("width", 18).attr("height", 10)
+        .style("fill", "#FF5733")
+        legend_svg.append("rect").attr("x",700).attr("y",30).attr("width", 18).attr("height", 10)
+        .style("fill", "#C70039")
+        legend_svg.append("rect").attr("x",700).attr("y",42).attr("width", 18).attr("height", 10)
+        .style("fill", "#900C3F")
+
+        legend_svg.append("text").attr("x", 720).attr("y", 16).text("5_5.9").style("font-size", "15px").attr("alignment-baseline","middle")
+        legend_svg.append("text").attr("x", 720).attr("y", 28).text("6_6.9").style("font-size", "15px").attr("alignment-baseline","middle")
+        legend_svg.append("text").attr("x", 720).attr("y", 40).text("7_7.9").style("font-size", "15px").attr("alignment-baseline","middle")
+        legend_svg.append("text").attr("x", 720).attr("y", 52).text("8.0+").style("font-size", "15px").attr("alignment-baseline","middle")
+   })
+
+   
+//---------------------------------------------------------//
+     d3.dsv("," , "earthquakes.csv", function(data){
+        return{
+
+            year: formatTime(data.year),
+            //["8.0+"]:parseInt(data["8.0+"]),
+            ["8.0+"]:d3.max([1,parseInt(data["8.0+"])]),
+            ["7_7.9"]:parseInt(data["7_7.9"]),
+            ["6_6.9"]:parseInt(data["6_6.9"]),
+            ["5_5.9"]:parseInt(data["5_5.9"]),
+            ["Estimated Deaths"]:parseInt(data["Estimated Deaths"])
+
+        }
+
+    }).then(function(data){
+        console.log(data);
+        let y8max = d3.max(data,d=>d["8.0+"])
+        let y7max = d3.max(data,d=>d["7_7.9"])
+        let y6max = d3.max(data,d=>d["6_6.9"])
+        let y5max = d3.max(data,d=>d["5_5.9"])
+        let y8min = d3.min(data,d=>d["8.0+"])
+        let y7min = d3.min(data,d=>d["7_7.9"])
+        let y6min = d3.min(data,d=>d["6_6.9"])
+        let y5min = d3.min(data,d=>d["5_5.9"])
+        
+        xScale = d3.scaleTime()
+        .domain(d3.extent(data,d=>d.year))
+        .range([0,600])
+        
+        y5Scale =d3.scaleLinear()
+        .domain([0,y5max]).range([300,0])
+
+        const sqrt = d3.scaleSqrt()
+        .domain([0,y5max])
+        .range([300, 0])
+
+        eLog = d3.scaleLog()
+                 .domain([1,y5max])
+                 .range([300, 0]);
+
+        svg = d3.select("#graph3").append("svg")
+        .attr("width",700).attr("height",800)
+        
+        svg.append("g").attr("transform","translate(50,50)")
+        .call(d3.axisLeft(eLog))
+
+        svg.append("g").attr("transform","translate(50,350)")
+        .call(d3.axisBottom(xScale))
+
+
+        line5 = d3.line()
+        .x(d=>xScale(d.year))
+        .y(d=>eLog(d["5_5.9"]))
+        .curve(d3.curveMonotoneX)
+
+        line6 = d3.line()
+        .x(d=>xScale(d.year))
+        .y(d=>eLog(d["6_6.9"]))
+        .curve(d3.curveMonotoneX)
+
+        line7 = d3.line()
+        .x(d=>xScale(d.year))
+        .y(d=>eLog(d["7_7.9"]))
+        .curve(d3.curveMonotoneX)
+
+        line8 = d3.line()
+        .x(d=>xScale(d.year))
+        .y(d=>eLog(d["8.0+"]))
+        .curve(d3.curveMonotoneX)  
+
+
+
+        svg.append("path").attr("transform","translate(50,50)").datum(data).attr("d",line5).attr("class","line5")
+
+        svg.append("path").attr("transform","translate(50,50)").datum(data).attr("d",line6).attr("class","line6")
+
+        svg.append("path").attr("transform","translate(50,50)").datum(data).attr("d",line7).attr("class","line7")
+
+        svg.append("path").attr("transform","translate(50,50)").datum(data).attr("d",line8).attr("class","line8")
+
+        circles=svg.selectAll("circle").data(data).enter()
+            circles.append("circle")
+            .attr("transform","translate(50,50)")
+            .attr("cx", function(d) {return xScale(d.year);})
+            .attr("cy", function(d) {return eLog(d["5_5.9"]);})
+            .attr("r", function(d) {
+             return Math.sqrt(Math.sqrt(d["Estimated Deaths"]))/2;
+            })
+            .style("fill", "#FFC300")
+
+        
+            circles.append("circle")
+            .attr("transform","translate(50,50)")
+            .attr("cx", function(d) {return xScale(d.year);})
+            .attr("cy", function(d) {return eLog(d["6_6.9"]);})
+            .attr("r", function(d) {
+             return Math.sqrt(Math.sqrt(d["Estimated Deaths"]))/2;
+            })
+            .style("fill", "#FF5733")
+
+            circles.append("circle")
+            .attr("transform","translate(50,50)")
+            .attr("cx", function(d) {return xScale(d.year);})
+            .attr("cy", function(d) {return eLog(d["7_7.9"]);})
+            .attr("r", function(d) {
+             return Math.sqrt(Math.sqrt(d["Estimated Deaths"]))/2;
+            })
+            .style("fill", "#C70039")  
+
+            circles.append("circle")
+            .attr("transform","translate(50,50)")
+            .attr("cx", function(d) {return xScale(d.year);})
+            .attr("cy", function(d) {return eLog(d["8.0+"]);})
+            .attr("r", function(d) {
+             return Math.sqrt(Math.sqrt(d["Estimated Deaths"]))/2;
+            })
+            .style("fill", "#900C3F")    
+
+        svg.append("g").attr("class", "legendQuant").attr("transform", "translate(20,20)");
+
+        svg.append("text").attr("transform", "rotate(-90)")
+           .attr("y",0)
+           .attr("x",-190)
+           .attr("dy", "1em")
+           .style("text-anchor", "middle")
+           .text("Num of Earthquakes"); 
+
+        svg.append("text").attr("transform",
+            "translate(" + 330 + " ," + 400+ ")")
+            .style("text-anchor", "middle")
+            .text("Year");  
+
+        svg.append("text").attr("transform",
+            "translate(" + 340 + " ," + 20+ ")")
+            .style("text-anchor", "middle")
+            .text("Worldwide Earthquake stats 2000-2015 log scale");  
+
+        legend_svg = d3.select("#graph3")
+        legend_svg.attr("transform", "translate(0,20)");
+
+
+// {'5_5.9': '#FFC300', '6_6.9': '#FF5733', '7_7.9': '#C70039', '8.0+': '#900C3F'}
+        legend_svg.append("rect").attr("x",700).attr("y",6).attr("width", 18).attr("height", 10)
+        .style("fill", "#FFC300")
+        legend_svg.append("rect").attr("x",700).attr("y",18).attr("width", 18).attr("height", 10)
+        .style("fill", "#FF5733")
+        legend_svg.append("rect").attr("x",700).attr("y",30).attr("width", 18).attr("height", 10)
+        .style("fill", "#C70039")
+        legend_svg.append("rect").attr("x",700).attr("y",42).attr("width", 18).attr("height", 10)
+        .style("fill", "#900C3F")
+
+        legend_svg.append("text").attr("x", 720).attr("y", 16).text("5_5.9").style("font-size", "15px").attr("alignment-baseline","middle")
+        legend_svg.append("text").attr("x", 720).attr("y", 28).text("6_6.9").style("font-size", "15px").attr("alignment-baseline","middle")
+        legend_svg.append("text").attr("x", 720).attr("y", 40).text("7_7.9").style("font-size", "15px").attr("alignment-baseline","middle")
+        legend_svg.append("text").attr("x", 720).attr("y", 52).text("8.0+").style("font-size", "15px").attr("alignment-baseline","middle")
+   })  
+
+        
+//----------------------------------------------------------//
+
+        
+         d3.dsv("," , "earthquakes.csv", function(data){
+        return{
+
+            year: formatTime(data.year),
+            ["8.0+"]:parseInt(data["8.0+"]),
+            ["7_7.9"]:parseInt(data["7_7.9"]),
+            ["6_6.9"]:parseInt(data["6_6.9"]),
+            ["5_5.9"]:parseInt(data["5_5.9"]),
+            ["Estimated Deaths"]:parseInt(data["Estimated Deaths"])
+
+        }
+
+    }).then(function(data){
+        console.log(data);
+        let y8max = d3.max(data,d=>d["8.0+"])
+        let y7max = d3.max(data,d=>d["7_7.9"])
+        let y6max = d3.max(data,d=>d["6_6.9"])
+        let y5max = d3.max(data,d=>d["5_5.9"])
+        let y8min = d3.min(data,d=>d["8.0+"])
+        let y7min = d3.min(data,d=>d["7_7.9"])
+        let y6min = d3.min(data,d=>d["6_6.9"])
+        let y5min = d3.min(data,d=>d["5_5.9"])
+        
+        xScale = d3.scaleTime()
+        .domain(d3.extent(data,d=>d.year))
+        .range([0,600])
+        
+        y5Scale =d3.scaleLinear()
+        .domain([0,y5max]).range([300,0])
+
+        const sqrt = d3.scaleSqrt()
+        .domain([0,y5max])
+        .range([300, 0])
+
+        svg = d3.select("#graph4").append("svg")
+        .attr("width",700).attr("height",800)
+        
+        svg.append("g").attr("transform","translate(50,50)")
+        .call(d3.axisLeft(sqrt))
+
+        svg.append("g").attr("transform","translate(50,350)")
+        .call(d3.axisBottom(xScale))
+
+
+        line5 = d3.line()
+        .x(d=>xScale(d.year))
+        .y(d=>sqrt(d["5_5.9"]))
+        .curve(d3.curveMonotoneX)
+
+        line6 = d3.line()
+        .x(d=>xScale(d.year))
+        .y(d=>sqrt(d["6_6.9"]))
+        .curve(d3.curveMonotoneX)
+
+        line7 = d3.line()
+        .x(d=>xScale(d.year))
+        .y(d=>sqrt(d["7_7.9"]))
+        .curve(d3.curveMonotoneX)
+
+        line8 = d3.line()
+        .x(d=>xScale(d.year))
+        .y(d=>sqrt(d["8.0+"]))
+        .curve(d3.curveMonotoneX)        
+
+
+        svg.append("path").attr("transform","translate(50,50)").datum(data).attr("d",line5).attr("class","line5")
+
+        svg.append("path").attr("transform","translate(50,50)").datum(data).attr("d",line6).attr("class","line6")
+
+        svg.append("path").attr("transform","translate(50,50)").datum(data).attr("d",line7).attr("class","line7")
+
+        svg.append("path").attr("transform","translate(50,50)").datum(data).attr("d",line8).attr("class","line8")
+
+        circles=svg.selectAll("circle").data(data).enter()
+            circles.append("circle")
+            .attr("transform","translate(50,50)")
+            .attr("cx", function(d) {return xScale(d.year);})
+            .attr("cy", function(d) {return sqrt(d["5_5.9"]);})
+            .attr("r", function(d) {
+             return Math.sqrt(Math.sqrt(d["Estimated Deaths"]))/2;
+            })
+            .style("fill", "#FFC300")
+
+        
+            circles.append("circle")
+            .attr("transform","translate(50,50)")
+            .attr("cx", function(d) {return xScale(d.year);})
+            .attr("cy", function(d) {return sqrt(d["6_6.9"]);})
+            .attr("r", function(d) {
+             return Math.sqrt(Math.sqrt(d["Estimated Deaths"]))/2;
+            })
+            .style("fill", "#FF5733")
+
+            circles.append("circle")
+            .attr("transform","translate(50,50)")
+            .attr("cx", function(d) {return xScale(d.year);})
+            .attr("cy", function(d) {return sqrt(d["7_7.9"]);})
+            .attr("r", function(d) {
+             return Math.sqrt(Math.sqrt(d["Estimated Deaths"]))/2;
+            })
+            .style("fill", "#C70039")  
+
+            circles.append("circle")
+            .attr("transform","translate(50,50)")
+            .attr("cx", function(d) {return xScale(d.year);})
+            .attr("cy", function(d) {return sqrt(d["8.0+"]);})
+            .attr("r", function(d) {
+             return Math.sqrt(Math.sqrt(d["Estimated Deaths"]))/2;
+            })
+            .style("fill", "#900C3F")    
+
+        svg.append("g").attr("class", "legendQuant").attr("transform", "translate(20,20)");
+
+        svg.append("text").attr("transform", "rotate(-90)")
+           .attr("y",0)
+           .attr("x",-190)
+           .attr("dy", "1em")
+           .style("text-anchor", "middle")
+           .text("Num of Earthquakes"); 
+
+        svg.append("text").attr("transform",
+            "translate(" + 330 + " ," + 400+ ")")
+            .style("text-anchor", "middle")
+            .text("Year");  
+
+        svg.append("text").attr("transform",
+            "translate(" + 340 + " ," + 20+ ")")
+            .style("text-anchor", "middle")
+            .text("Worldwide Earthquake stats 2000-2015 square root scale");  
+
+        legend_svg = d3.select("#graph4")
+        legend_svg.attr("transform", "translate(0,20)");
+
+
+// {'5_5.9': '#FFC300', '6_6.9': '#FF5733', '7_7.9': '#C70039', '8.0+': '#900C3F'}
+        legend_svg.append("rect").attr("x",700).attr("y",6).attr("width", 18).attr("height", 10)
+        .style("fill", "#FFC300")
+        legend_svg.append("rect").attr("x",700).attr("y",18).attr("width", 18).attr("height", 10)
+        .style("fill", "#FF5733")
+        legend_svg.append("rect").attr("x",700).attr("y",30).attr("width", 18).attr("height", 10)
+        .style("fill", "#C70039")
+        legend_svg.append("rect").attr("x",700).attr("y",42).attr("width", 18).attr("height", 10)
+        .style("fill", "#900C3F")
+
+        legend_svg.append("text").attr("x", 720).attr("y", 16).text("5_5.9").style("font-size", "15px").attr("alignment-baseline","middle")
+        legend_svg.append("text").attr("x", 720).attr("y", 28).text("6_6.9").style("font-size", "15px").attr("alignment-baseline","middle")
+        legend_svg.append("text").attr("x", 720).attr("y", 40).text("7_7.9").style("font-size", "15px").attr("alignment-baseline","middle")
+        legend_svg.append("text").attr("x", 720).attr("y", 52).text("8.0+").style("font-size", "15px").attr("alignment-baseline","middle")
+   })  
+                        
+        
+    </script>
+    <div style="display: inline-table; width: 20px; height: 75px; background_color: teal;">
+    </div>
+</body>
+</html>

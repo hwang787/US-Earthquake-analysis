@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <center id="mainTitle"><b>US Earthquakes by Region 2010-2015</b></center>
+    <center id="top"><div id="lineChart"></div></center>
+    <center id="subTitle"><b>West Region Earthquakes 2011</b></center>
+    <center id="bottom"><div id="barChart"></div></center>
+    <meta charset="utf-8">
+    <title> Q3</title>
+    <script type="application/javascript" src="../lib/d3.v5.min.js"></script>
+    <script type="application/javascript" src="../lib/d3-dsv.min.js"></script>
+    <script type="application/javascript" src="../lib/d3-fetch.min.js"></script>
+    <script type="application/javascript" src="../lib/d3-scale-chromatic.v1.min.js"></script>
+    <script type="application/javascript" src="../lib/topojson.v2.min.js"></script>
+    <style type="text/css">
+        /**/
+
+.bar {
+    fill: #5f89ad;
+}
+
+.center {
+    text-align: center;
+}
+.legend {
+
+}
+
+.circle:hover {
+    fill: #5f89ad;
+}
+    </style>
+
+</head>
+<script type="text/javascript">
+    d3.csv("./state-year-earthquakes.csv")
+    .then(showData)
+
+    function showData(data){
+          
+         let years = d3.map(data, d=>d.year).keys();
+         years.sort((year1, year2)=>{year1-year2});
+         //console.log(years)
+         let regions = d3.map(data, d=>d.region).keys();
+         let states = d3.map(data, d=>d.state).keys();
+
+         let CountPerYearPerRegion = d3.nest()
+        .key(d=> d.region).sortKeys(d3.ascending)
+        .key(d=> d.year).sortKeys(d3.ascending)
+        .rollup(value=>d3.sum(value, d => +d.count))
+        .entries(data);
+
+        //let regions = CountPerYearPerRegion.map( d=>d.key);
+
+        let CountPerStatePerYearPerRegion = d3.nest()
+        .key(d=> d.region).sortKeys(d3.ascending)
+        .key(d=> d.year).sortKeys(d3.ascending)
+        .key(d=> d.state)
+        .rollup(value=>d3.sum(value, d => +d.count))
+        .entries(data);
+
+        let maxCount = 0
+        CountPerYearPerRegion.forEach(function(region,idx){
+            
+            var arr = region.values;
+            //console.log(arr)
+            arr.forEach(function(year,count){
+                if(maxCount<year.value){
+                    maxCount=year.value;
+                    //console.log(year.value)
+                    //console.log(maxCount)
+                }
+                
+            })
+        })
+        //console.log(maxCount)
+
+        let cScale = d3.scaleOrdinal()
+                       .range(d3.schemeCategory10)
+                       //.range("red","blue","purple","orange")
+                       .domain(regions);
+        let xScale = d3.scalePoint()
+                       .domain(years)
+                       .range([0, 700]);///////////
+        let yScale = d3.scaleLinear()
+                       .domain([0,maxCount*1.03])
+                       .range([300, 0]);///////////
+
+        let svg = d3.select("#top").select("#lineChart")
+        .append("svg")
+        .attr("width", 950)
+        .attr("height", 350)
+        .attr("transform", "translate(0,20)")
+        //.append("g")
+
+        svg.append("g")
+        .attr("transform", "translate(50,400)")
+        .call(d3.axisBottom(xScale));
+        svg.append("g")
+        .attr("transform", "translate(50,0)")
+        .call(d3.axisLeft(yScale));
+        //.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+        ///////lines////////
+        CountPerYearPerRegion.forEach(function(region,idx){
+            
+            var arr = region.values;
+            var arr2= region.values;
+            //console.log(arr)
+            //console.log(cScale(region))
+            line = d3.line()
+             .x(d=>xScale(d.key))
+             .y(d=>yScale(d.value))
+             //.curve(d3.curveMonotoneX)
+
+            svg.append("path")
+            .attr("transform","translate(50,0)").datum(arr)
+            .attr("d",line)
+            .style("stroke", d=> cScale(region.key))
+            .style("fill","none")//d=> cScale(d.key));
+            .style("stroke-width", 4)
+        
+        })
+        
+        /////legend//////
+        var legend = svg.selectAll(".legend")
+        .append("g")
+        .attr("transform", "translate(0,40)")
+        .data(regions)
+        .enter()
+
+        legend.append('circle')
+        .attr('cx', 780)
+        .attr('cy', function(d, i) {
+            return 10+i * 20;
+        })
+        .attr('r',7)
+        .style('fill', function(d) {
+            return cScale(d);
+        });
+
+    legend.append('text')
+        .attr('x', 790)
+        .attr('y', function(d, i) {
+            return (i * 20) + 15;
+        })
+        .text(function(d) {
+            return d;
+        });
+
+        draw("West",2011)
+        /////defalt subchart///////
+        CountPerYearPerRegion.forEach(function(region,idx){
+            
+            var arr = region.values;
+            var arr2= region.values;
+            svg.selectAll(".circle0")
+            .data(arr).enter()
+            .append("circle")
+            .attr("transform","translate(50,0)")
+            .attr("cx", d=>xScale(d.key))
+            .attr("cy", d=> yScale(d.value))
+            .attr("r",d=> 6.5)
+            .attr("class",".circle")
+            .style("fill", d=> cScale(region.key))
+            .on("mouseover", function(d) { 
+            d3.select(this).attr("r",10)
+            
+            draw(region.key,d.key)
+            //let c=d3.select(this)
+            //console.log(c.cx)
+
+            })
+            .on("mouseout", function(d) {
+            d3.select(this).attr("r",6.5) 
+            //d3.select(this).attr("r",6)
+            d3.select("#bottom")
+              .select("#barChart")
+              .selectAll("svg")
+              .remove();
+            d3.select("#subTitle")
+               .selectAll("b").text(" ")
+            //let c=d3.select(this)
+            //console.log(c.cx)
+
+            })
+        })///////circle////
+    
+
+    
+    function draw(r,y){
+        d3.select("#subTitle")
+        .selectAll("b").text(r+" Region Earthquakes "+y)
+        var subChart = d3.select("#bottom")
+              .select("#barChart")
+              .append("svg")
+              .attr("width", 700)
+              .attr("height", 600)
+              .append("g")
+              .attr("transform", "translate(50,50)");
+        ////////////////////////////////////////////
+
+        let moseoverregion=r;
+        let moseoveryear=y;
+        let moseoverStates=[];
+        let moseoverCounts=[];
+
+
+    datafiltered=data.filter(state=>state.region==moseoverregion&&state.year==moseoveryear);
+
+    let CountPerYear_FIXED_Region = d3.nest()
+        .key(d=> d.state)    
+        .rollup(value=>d3.sum(value, d => +d.count))
+        .entries(datafiltered);
+
+    CountPerYear_FIXED_Region.sort(function(state1,state2){
+        return d3.descending(state1.value,state2.value);//-state2.value;
+    }) 
+        
+    maxMoseoverCount=0
+    CountPerYear_FIXED_Region.forEach(function(bar){
+        moseoverStates.push(bar.key)
+        moseoverCounts.push(bar.value)
+        if(maxMoseoverCount<bar.value){
+           maxMoseoverCount=bar.value
+        }
+    }) 
+
+    let x_Scale = d3.scaleLinear()
+                    .range([0, 600])
+                    .domain(d3.extent([0,maxMoseoverCount]))
+                    .nice()
+    let y_Scale = d3.scaleBand()
+                    .domain(moseoverStates)
+                    .range([0, 500])
+                    .padding(0.2);
+    
+    subChart.append("g")
+        .attr("transform", "translate(30,500)")
+        .call(d3.axisBottom(x_Scale).ticks(5)
+        .tickSizeInner(-(500))
+        .tickSizeOuter(0)
+        .tickPadding(10))
+        
+    subChart.append("g")
+        .attr("transform", "translate(30,0)")
+        .call(d3.axisLeft(y_Scale));
+
+    let bars = subChart.selectAll(".bar")
+        .data(CountPerYear_FIXED_Region)
+        .enter()
+        .append("g");
+
+    bars.append("rect")
+        .attr("transform", "translate(30,0)")
+        .style("fill", "pink")
+        .attr("y", function (d) {
+            return y_Scale(d.key);
+        })
+        .attr("height", y_Scale.bandwidth())
+        .attr("x", 0)
+        .attr("width", function (d) {
+            return x_Scale(d.value);
+        });
+    }
+}
+
+
+
+</script>
+    

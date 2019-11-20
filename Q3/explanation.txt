@@ -1,0 +1,5 @@
+square root scale:
+When referring to area in 2D dimension, progression with constant acceleration like falling balls.
+
+log scale
+For data based on magnitude such as earthquake, explosion growth in ecosystem, light intensity and sound loudness, concentration of molecules during chemical reaction.
